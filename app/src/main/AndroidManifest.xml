@@ -22,6 +22,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".resources.CreateNewProduct" />
+        <activity android:name=".resources.ViewDetailProduct" />
+        <activity android:name=".resources.UpdateProduct" />
 
     </application>
 

@@ -1,11 +1,13 @@
 package id.inixindo.mysqlitedb.resources;
 
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -19,13 +21,14 @@ import id.inixindo.mysqlitedb.R;
 import id.inixindo.mysqlitedb.database.DBDataSource;
 import id.inixindo.mysqlitedb.models.Product;
 
-public class ViewAllProducts extends ListActivity {
+public class ViewAllProducts extends ListActivity implements AdapterView.OnItemLongClickListener {
     // inisialisasi data source
     private DBDataSource dataSource;
     private ArrayList<Product> products;
 
     ListView listView;
     FloatingActionButton fabCreateProduct;
+    Button buttonEdit, buttonDelete;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,17 +46,13 @@ public class ViewAllProducts extends ListActivity {
         setListAdapter(adapter);
 
         listView = findViewById(android.R.id.list);
-        listView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                // pilihan untuk edit atau delete menggunakan dialog
-                return false;
-            }
-        });
+        listView.setOnItemLongClickListener(this);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 // melihat detail product
+                Product product = (Product) getListAdapter().getItem(position);
+                switchToGetDetail(product.getId());
             }
         });
 
@@ -68,6 +67,19 @@ public class ViewAllProducts extends ListActivity {
         });
     }
 
+    public void switchToGetDetail(long id) {
+        Product product = dataSource.getProductById(id);
+        Intent intent = new Intent(this, ViewDetailProduct.class);
+        Bundle bundle = new Bundle();
+        bundle.putLong("id", product.getId());
+        bundle.putString("name", product.getName());
+        bundle.putString("price", product.getPrice());
+        bundle.putString("description", product.getDescription());
+        intent.putExtras(bundle);
+        dataSource.close();
+        startActivity(intent);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -78,5 +90,51 @@ public class ViewAllProducts extends ListActivity {
     protected void onPause() {
         super.onPause();
         dataSource.close();
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.view_dialog);
+        dialog.show();
+
+        final Product product = (Product) getListAdapter().getItem(position);
+        buttonEdit = dialog.findViewById(R.id.buttonEdit);
+        buttonDelete = dialog.findViewById(R.id.buttonDelete);
+
+        buttonEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // membuka form edit product
+                switchToEditProduct(product.getId());
+                dialog.dismiss();
+            }
+        });
+
+        buttonDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dataSource.deleteProduct(product.getId());
+                dialog.dismiss();
+                finish();
+                startActivity(getIntent());
+            }
+        });
+
+        return true;
+    }
+
+    public void switchToEditProduct(long id) {
+        Product product = dataSource.getProductById(id);
+        Intent intent = new Intent(this, UpdateProduct.class);
+        Bundle bundle = new Bundle();
+        bundle.putLong("id", product.getId());
+        bundle.putString("name", product.getName());
+        bundle.putString("price", product.getPrice());
+        bundle.putString("description", product.getDescription());
+        intent.putExtras(bundle);
+        ViewAllProducts.this.finish();
+        dataSource.close();
+        startActivity(intent);
     }
 }

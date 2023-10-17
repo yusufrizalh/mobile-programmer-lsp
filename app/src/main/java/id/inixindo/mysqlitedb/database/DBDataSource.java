@@ -88,8 +88,21 @@ public class DBDataSource {
     }
 
     // membuat method update product
+    public void updateProduct(Product product) {
+        // ambil id product yang akan diubah
+        String strId = "id=" + product.getId();
+        ContentValues values = new ContentValues();
+        values.put(DBHelper.COLUMN_NAME, product.getName());
+        values.put(DBHelper.COLUMN_PRICE, product.getPrice());
+        values.put(DBHelper.COLUMN_DESCRIPTION, product.getDescription());
+        database.update(DBHelper.TABLE_NAME, values, strId, null);
+    }
 
     // membuat method delete product
+    public void deleteProduct(long id) {
+        String strId = "id=" + id;
+        database.delete(DBHelper.TABLE_NAME, strId, null);
+    }
 
     private Product cursorToProduct(Cursor cursor) {
         Product product = new Product();
